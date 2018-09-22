@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">AppQuestDechiffrierAufgabe</string>
+    <string name="foto_aufnehmen">Foto aufnehmen</string>
+    <string name="foto">Foto</string>
 </resources>
