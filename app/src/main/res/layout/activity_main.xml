@@ -5,23 +5,34 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-
-        <Button
-            android:id="@+id/fotoButton"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Foto aufnehmen" />
+            android:orientation="vertical">
 
-        <ImageView
-            android:id="@+id/meineFotoView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="Foto" />
+            <Button
+                android:id="@+id/fotoButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Foto aufnehmen" />
 
-    </LinearLayout>
+            <ImageView
+                android:id="@+id/meineFotoView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:contentDescription="Foto" />
+
+            <ImageView
+                android:id="@+id/gefiltertesFotoView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:contentDescription="FotoMitFilter" />
+
+        </LinearLayout>
+    </ScrollView>
 
 </android.support.constraint.ConstraintLayout>
