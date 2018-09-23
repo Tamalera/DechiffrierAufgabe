@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
     static final int REQUEST_TAKE_PHOTO = 1;
     String mCurrentPhotoPath;
 
-    ImageView meinFoto;
+    ImageView meineFotoView;
 
     Button button;
 
@@ -78,9 +78,11 @@ public class MainActivity extends AppCompatActivity {
 //    Foto von Kamera zurückbekommen
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        meinFoto = findViewById(R.id.meinFoto);
+        meineFotoView = findViewById(R.id.meineFotoView);
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            fotoZuGallerieHinzufuegen();
+            File aufgenommenesFoto = fotoZuGallerieHinzufuegen();
+            Bitmap meinFoto = fotoEinlesen(Uri.fromFile(aufgenommenesFoto));
+            meineFotoView.setImageBitmap(meinFoto);
         }
     }
 
@@ -98,12 +100,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
 //    Foto in Gallerie speichern
-    private void fotoZuGallerieHinzufuegen() {
+    private File fotoZuGallerieHinzufuegen() {
         Intent meinFoto = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
         File f = new File(mCurrentPhotoPath);
         Uri contentUri = Uri.fromFile(f);
         meinFoto.setData(contentUri);
         this.sendBroadcast(meinFoto);
+        return f;
     }
 
 //    Hilfsfunktion zum Einlesen des Bildes

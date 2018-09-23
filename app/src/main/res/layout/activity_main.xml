@@ -17,7 +17,7 @@
             android:text="Foto aufnehmen" />
 
         <ImageView
-            android:id="@+id/meinFoto"
+            android:id="@+id/meineFotoView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:contentDescription="Foto" />
