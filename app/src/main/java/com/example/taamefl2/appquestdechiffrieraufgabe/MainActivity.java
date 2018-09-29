@@ -1,20 +1,28 @@
 package com.example.taamefl2.appquestdechiffrieraufgabe;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.icu.text.SimpleDateFormat;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Toast;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,10 +38,13 @@ public class MainActivity extends AppCompatActivity {
     static final int REQUEST_TAKE_PHOTO = 1;
     String mCurrentPhotoPath;
 
-//    Variabeln für anzeige (alles was View betrifft)
+//    Variabeln für Anzeige (alles was View betrifft)
     ImageView gefiltertesFoto;
     ImageView meineFotoView;
     Button button;
+//  Logging
+    Button logButton;
+    private Context context = this;
 
 //    Das Foto wird in Variable meinFoto gespeichert
     Bitmap meinFoto;
@@ -44,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         addListenerOnButton();
+        loesungEingeben();
     }
 
     // Button zum Foto schiessen (nicht zwingend nötig, aber nice für den Flow)
@@ -89,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
         File speicherOrt = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         File image = File.createTempFile(fotoNamen,".jpg", speicherOrt);
 
-//        Abspeichern des Fotos
+//      Abspeichern des Fotos
         mCurrentPhotoPath = image.getAbsolutePath();
         return image;
     }
@@ -161,11 +173,66 @@ public class MainActivity extends AppCompatActivity {
             int rot = (data[i]>>16) & 0xff0000;
             int gruen = (data[i]>>8) & 0xff0000;
             int blau = data[i] & 0xff0000;
-            
+
             data[i] = (alpha<<24) | (rot<<16) | (gruen<<8) | blau;
         }
         bitmap.setPixels(data, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
         Bitmap.createBitmap(data, width, height, Bitmap.Config.ARGB_8888);
         return bitmap;
     }
+
+//  Button um Lösung ins Logbuch eintragen
+    public void loesungEingeben() {
+        logButton = findViewById(R.id.logBuchEintrag);
+        logButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View view) {
+                final AlertDialog.Builder inputAlert = new AlertDialog.Builder(context);
+                inputAlert.setTitle("Lösungswort eintragen");
+                inputAlert.setMessage("Bitte Lösung eintragen:");
+                final EditText benutzerEingabe = new EditText(context);
+                inputAlert.setView(benutzerEingabe);
+                inputAlert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String loesungswort = benutzerEingabe.getText().toString();
+                        log(loesungswort);
+                    }
+                });
+                inputAlert.setNegativeButton("Abbrechen", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                AlertDialog alertDialog = inputAlert.create();
+                alertDialog.show();
+            }
+        });
+    }
+
+//    Logbuch Eintrag erfassen:
+private void log(String loesung) {
+    Intent intent = new Intent("ch.appquest.intent.LOG");
+
+    if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).isEmpty()) {
+        Toast.makeText(this, "Logbook App not Installed", Toast.LENGTH_LONG).show();
+        return;
+    }
+
+    // Lösungsword eintragen --> ToDo: als Funktion abkapseln
+    JSONObject loesungsJSON = new JSONObject();
+    try {
+        loesungsJSON.put("task", "Dechiffrierer");
+        loesungsJSON.put("solution", loesung);
+    } catch (JSONException e) {
+        e.printStackTrace();
+    }
+
+    intent.putExtra("ch.appquest.logmessage", loesungsJSON.toString());
+
+    startActivity(intent);
+}
+
 }

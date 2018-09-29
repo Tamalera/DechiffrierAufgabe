@@ -32,6 +32,12 @@
                 android:layout_height="wrap_content"
                 android:contentDescription="FotoMitFilter" />
 
+            <Button
+                android:id="@+id/logBuchEintrag"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Log Lösung" />
+
         </LinearLayout>
     </ScrollView>
 
