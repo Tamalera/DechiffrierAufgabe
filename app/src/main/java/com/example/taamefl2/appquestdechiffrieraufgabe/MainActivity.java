@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.icu.text.SimpleDateFormat;
 import android.net.Uri;
 import android.os.Environment;
@@ -48,6 +49,11 @@ public class MainActivity extends AppCompatActivity {
 
 //    Das Foto wird in Variable meinFoto gespeichert
     Bitmap meinFoto;
+
+//    ToDo: weitere Lifecycle Hooks ansprechen
+//    ToDo: Problem: wenn Bildschirmgedreht, App wird zurückgesetzt
+//    ToDo: Klassen machen --> CleanCode allgemein
+//    ToDo: Testing!
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -165,12 +171,11 @@ public class MainActivity extends AppCompatActivity {
 
         bitmap.getPixels(data, 0, width, 0, 0, width, height);
 
-        // ToDO: Hier können die Pixel im data-array bearbeitet und
-        // ToDo: anschliessend damit ein neues Bitmap erstellt werden
+        // ToDO: Filter verbessern
 
         for (int i = 0; i < data.length; i++){
-            int alpha = (data[i]>>24) & 0xff0000;
-            int rot = (data[i]>>16) & 0xff0000;
+            int alpha = (data[i]>>24) & 0x000000;
+            int rot = (data[i]>>16) & 0x00ffff;
             int gruen = (data[i]>>8) & 0xff0000;
             int blau = data[i] & 0xff0000;
 
@@ -213,26 +218,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
 //    Logbuch Eintrag erfassen:
-private void log(String loesung) {
-    Intent intent = new Intent("ch.appquest.intent.LOG");
+    private void log(String loesung) {
+        Intent intent = new Intent("ch.appquest.intent.LOG");
 
-    if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).isEmpty()) {
-        Toast.makeText(this, "Logbook App not Installed", Toast.LENGTH_LONG).show();
-        return;
+        if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).isEmpty()) {
+            Toast.makeText(this, "Logbook App not Installed", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // ToDo: als Funktion abkapseln
+        // Lösungsword eintragen
+        JSONObject loesungsJSON = new JSONObject();
+        try {
+            loesungsJSON.put("task", "Dechiffrierer");
+            loesungsJSON.put("solution", loesung);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        intent.putExtra("ch.appquest.logmessage", loesungsJSON.toString());
+
+        startActivity(intent);
     }
-
-    // Lösungsword eintragen --> ToDo: als Funktion abkapseln
-    JSONObject loesungsJSON = new JSONObject();
-    try {
-        loesungsJSON.put("task", "Dechiffrierer");
-        loesungsJSON.put("solution", loesung);
-    } catch (JSONException e) {
-        e.printStackTrace();
-    }
-
-    intent.putExtra("ch.appquest.logmessage", loesungsJSON.toString());
-
-    startActivity(intent);
-}
 
 }
