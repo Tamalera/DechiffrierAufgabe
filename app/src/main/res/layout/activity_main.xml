@@ -7,7 +7,7 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical">
         <LinearLayout
             android:layout_width="match_parent"
@@ -15,28 +15,30 @@
             android:orientation="vertical">
 
             <Button
-                android:id="@+id/fotoButton"
+                android:id="@+id/captureImageButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Foto aufnehmen" />
 
-            <ImageView
-                android:id="@+id/meineFotoView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:contentDescription="Foto" />
-
-            <ImageView
-                android:id="@+id/gefiltertesFotoView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:contentDescription="FotoMitFilter" />
-
             <Button
-                android:id="@+id/logBuchEintrag"
+                android:id="@+id/logbookEntryButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Log Lösung" />
+
+            <ImageView
+                android:id="@+id/displayImageView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:contentDescription="Foto" />
+
+            <ImageView
+                android:id="@+id/displayFilteredImageView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:contentDescription="FotoMitFilter" />
 
         </LinearLayout>
     </ScrollView>

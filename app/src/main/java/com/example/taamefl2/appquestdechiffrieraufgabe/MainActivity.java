@@ -33,21 +33,20 @@ import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
-//    Variabeln für Foto aufnehmen
+    // Variables
     static final int REQUEST_IMAGE_CAPTURE = 1;
     static final int REQUEST_TAKE_PHOTO = 1;
     String mCurrentPhotoPath;
 
-//    Variabeln für Anzeige (alles was View betrifft)
     ImageView imageFiltered;
     ImageView imageView;
-    Button capturePictureButton;
+    Button captureImageButton;
     Button logResultsButton;
     Bitmap capturedImage;
+
     private Context context = this;
 
 //    ToDo: weitere Lifecycle Hooks ansprechen
-//    ToDo: Problem: wenn Bildschirmgedreht, App wird zurückgesetzt
 //    ToDo: Klassen machen --> CleanCode allgemein
 //    ToDo: Testing!
 
@@ -56,14 +55,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        addListenerOnCapturePictureButton();
+        addListenerOnCaptureImageButton();
         addListenerOnLogResultsButton();
     }
 
-    // Button zum Foto schiessen (nicht zwingend nötig, aber nice für den Flow)
-    public void addListenerOnCapturePictureButton() {
-        capturePictureButton = findViewById(R.id.fotoButton);
-        capturePictureButton.setOnClickListener(new View.OnClickListener() {
+    // Adds listener to the image button
+    public void addListenerOnCaptureImageButton() {
+        captureImageButton = findViewById(R.id.captureImageButton);
+        captureImageButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View arg0) {
@@ -72,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // Foto aufnehmen (mit Camera-App):
+    // Takes an image using the internal camera app
     private void captureImage() {
         Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (captureImage.resolveActivity(getPackageManager()) != null) {
@@ -81,7 +80,6 @@ public class MainActivity extends AppCompatActivity {
             try {
                 image = createUniqueImageName();
             } catch (IOException ex) {
-                // Error handling
                 System.out.print("Error: Kein Foto gefunden!");
             }
 
@@ -95,36 +93,32 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //  Foto mit unique Namen abspeichern
+    // Saves the image using an unique name (timestamp)
     private File createUniqueImageName() throws IOException {
-//      Foto-Namen generieren (mit Timestamp)
         String time = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
         String imageName = "Appquest_" + time + "_";
         File directory = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         File image = File.createTempFile(imageName,".jpg", directory);
-
-//      Abspeichern des Fotos
         mCurrentPhotoPath = image.getAbsolutePath();
         return image;
     }
 
-    //    Foto von Kamera zurückbekommen und anzeigen
+    // Gets the image from the camera and display it after being edited
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        imageView = findViewById(R.id.meineFotoView);
-        imageFiltered = findViewById(R.id.gefiltertesFotoView);
+        imageView = findViewById(R.id.displayImageView);
+        imageFiltered = findViewById(R.id.displayFilteredImageView);
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             File tempImage = addImageToGallery();
             capturedImage = readSavedImage(Uri.fromFile(tempImage));
             imageView.setImageBitmap(capturedImage);
 
-            // Filter anwenden und Foto in ImageView unter Foto anzeigen
             Bitmap bitmapFiltered = editBitmap(capturedImage);
             imageFiltered.setImageBitmap(bitmapFiltered);
         }
     }
 
-    // Foto in Gallerie speichern (Gallerie der App)
+    // Saves the image to the internal gallery
     private File addImageToGallery() {
         Intent scannedTempImage = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
         File tempImageFromPath = new File(mCurrentPhotoPath);
@@ -134,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
         return tempImageFromPath;
     }
 
-    // Hilfsfunktion zum Einlesen des Bildes: Merci an AppQuest!
+    // Reads the previously saved image - Merci @ AppQuest!
     private Bitmap readSavedImage(Uri imageUri) {
         File file = new File(imageUri.getPath());
         InputStream is = null;
@@ -156,9 +150,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-//    Foto zum Bearbeiten bereitstellen (damit Pixel bearbeitet weren können) Merci an AppQuest!
+    // Takes the captured image and edits it to get it readable - Merci @ AppQuest!
     private Bitmap editBitmap(Bitmap bitmap) {
-        // Macht bitmap veränderbar; sonst Error bei SetPixels()
+        // Copies original bitmap in order to make it mutable - else error in setPixels()
         bitmap = bitmap.copy( Bitmap.Config.ARGB_8888 , true);
 
         int width = bitmap.getWidth();
@@ -182,9 +176,9 @@ public class MainActivity extends AppCompatActivity {
         return bitmap;
     }
 
-//  Button um Lösung ins Logbuch eintragen
+    // Adds listener to the log button in order to pass the solution to logbook app
     public void addListenerOnLogResultsButton() {
-        logResultsButton = findViewById(R.id.logBuchEintrag);
+        logResultsButton = findViewById(R.id.logbookEntryButton);
         logResultsButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -198,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         String solution = userInput.getText().toString();
-                        log(solution);
+                        checkIfLogbookInstalled(solution);
                     }
                 });
                 inputAlert.setNegativeButton("Abbrechen", new DialogInterface.OnClickListener() {
@@ -213,17 +207,18 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-//    Logbuch Eintrag erfassen:
-    private void log(String solution) {
+    // Checks if logbook app is installed on the phone
+    private void checkIfLogbookInstalled(String solution) {
         Intent intent = new Intent("ch.appquest.intent.LOG");
-
         if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).isEmpty()) {
             Toast.makeText(this, "Logbook App not Installed", Toast.LENGTH_LONG).show();
-            return;
+        } else {
+            passDataToLogbook(intent, solution);
         }
+    }
 
-        // ToDo: als Funktion abkapseln
-        // Lösungsword eintragen
+    // Passes JSON object with solution info to logbook app
+    private void passDataToLogbook(Intent intent, String solution) {
         JSONObject solutionJSON = new JSONObject();
         try {
             solutionJSON.put("task", "Dechiffrierer");
@@ -231,10 +226,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
         intent.putExtra("ch.appquest.logmessage", solutionJSON.toString());
-
         startActivity(intent);
     }
-
 }
