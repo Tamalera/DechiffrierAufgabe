@@ -8,7 +8,7 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class Logbook {
+public class LogbookHandling {
 
     private Intent logbookIntent = new Intent("ch.appquest.intent.LOG");
 
