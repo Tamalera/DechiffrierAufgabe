@@ -36,25 +36,20 @@ public class MainActivity extends AppCompatActivity {
     // Variables
     static final int REQUEST_IMAGE_CAPTURE = 1;
     static final int REQUEST_TAKE_PHOTO = 1;
+    private Context context = this;
     String mCurrentPhotoPath;
-
     ImageView imageFiltered;
     ImageView imageView;
+    Bitmap capturedImage;
     Button captureImageButton;
     Button logResultsButton;
-    Bitmap capturedImage;
-
-    private Context context = this;
-
-//    ToDo: weitere Lifecycle Hooks ansprechen
-//    ToDo: Klassen machen --> CleanCode allgemein
-//    ToDo: Testing!
+    Logbook logbook = new Logbook();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        // Add eventlisteners
         addListenerOnCaptureImageButton();
         addListenerOnLogResultsButton();
     }
@@ -63,13 +58,48 @@ public class MainActivity extends AppCompatActivity {
     public void addListenerOnCaptureImageButton() {
         captureImageButton = findViewById(R.id.captureImageButton);
         captureImageButton.setOnClickListener(new View.OnClickListener() {
-
             @Override
             public void onClick(View arg0) {
                 captureImage();
             }
         });
     }
+
+    public void addListenerOnLogResultsButton() {
+        logResultsButton = findViewById(R.id.logbookEntryButton);
+        logResultsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final AlertDialog.Builder inputAlert = new AlertDialog.Builder(context);
+                inputAlert.setTitle("Lösungswort eintragen");
+                inputAlert.setMessage("Bitte Lösung eintragen:");
+                final EditText userInput = new EditText(context);
+                inputAlert.setView(userInput);
+                inputAlert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String solution = userInput.getText().toString();
+                        boolean logbookInstalled = logbook.checkIfLogbookInstalled(context);
+                        if (logbookInstalled) {
+                            logbook.passDataToLogbook(context, solution);
+                        }
+                    }
+                });
+                inputAlert.setNegativeButton("Abbrechen", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                AlertDialog alertDialog = inputAlert.create();
+                alertDialog.show();
+            }
+        });
+    }
+
+
+
+
 
     // Takes an image using the internal camera app
     private void captureImage() {
@@ -176,57 +206,5 @@ public class MainActivity extends AppCompatActivity {
         return bitmap;
     }
 
-    // Adds listener to the log button in order to pass the solution to logbook app
-    public void addListenerOnLogResultsButton() {
-        logResultsButton = findViewById(R.id.logbookEntryButton);
-        logResultsButton.setOnClickListener(new View.OnClickListener() {
 
-            @Override
-            public void onClick(View view) {
-                final AlertDialog.Builder inputAlert = new AlertDialog.Builder(context);
-                inputAlert.setTitle("Lösungswort eintragen");
-                inputAlert.setMessage("Bitte Lösung eintragen:");
-                final EditText userInput = new EditText(context);
-                inputAlert.setView(userInput);
-                inputAlert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        String solution = userInput.getText().toString();
-                        checkIfLogbookInstalled(solution);
-                    }
-                });
-                inputAlert.setNegativeButton("Abbrechen", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
-                AlertDialog alertDialog = inputAlert.create();
-                alertDialog.show();
-            }
-        });
-    }
-
-    // Checks if logbook app is installed on the phone
-    private void checkIfLogbookInstalled(String solution) {
-        Intent intent = new Intent("ch.appquest.intent.LOG");
-        if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).isEmpty()) {
-            Toast.makeText(this, "Logbook App not Installed", Toast.LENGTH_LONG).show();
-        } else {
-            passDataToLogbook(intent, solution);
-        }
-    }
-
-    // Passes JSON object with solution info to logbook app
-    private void passDataToLogbook(Intent intent, String solution) {
-        JSONObject solutionJSON = new JSONObject();
-        try {
-            solutionJSON.put("task", "Dechiffrierer");
-            solutionJSON.put("solution", solution);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        intent.putExtra("ch.appquest.logmessage", solutionJSON.toString());
-        startActivity(intent);
-    }
 }
