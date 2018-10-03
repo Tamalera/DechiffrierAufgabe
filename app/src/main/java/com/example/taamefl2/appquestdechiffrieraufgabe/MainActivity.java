@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.icu.text.SimpleDateFormat;
 import android.net.Uri;
 import android.os.Environment;
@@ -40,15 +39,12 @@ public class MainActivity extends AppCompatActivity {
     String mCurrentPhotoPath;
 
 //    Variabeln für Anzeige (alles was View betrifft)
-    ImageView gefiltertesFoto;
-    ImageView meineFotoView;
-    Button button;
-//  Logging
-    Button logButton;
+    ImageView imageFiltered;
+    ImageView imageView;
+    Button capturePictureButton;
+    Button logResultsButton;
+    Bitmap capturedImage;
     private Context context = this;
-
-//    Das Foto wird in Variable meinFoto gespeichert
-    Bitmap meinFoto;
 
 //    ToDo: weitere Lifecycle Hooks ansprechen
 //    ToDo: Problem: wenn Bildschirmgedreht, App wird zurückgesetzt
@@ -60,52 +56,52 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        addListenerOnButton();
-        loesungEingeben();
+        addListenerOnCapturePictureButton();
+        addListenerOnLogResultsButton();
     }
 
     // Button zum Foto schiessen (nicht zwingend nötig, aber nice für den Flow)
-    public void addListenerOnButton() {
-        button = findViewById(R.id.fotoButton);
-        button.setOnClickListener(new View.OnClickListener() {
+    public void addListenerOnCapturePictureButton() {
+        capturePictureButton = findViewById(R.id.fotoButton);
+        capturePictureButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View arg0) {
-                fotoAufnehmenIntent();
+                captureImage();
             }
         });
     }
 
     // Foto aufnehmen (mit Camera-App):
-    private void fotoAufnehmenIntent() {
-        Intent nimmFotoAuf = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (nimmFotoAuf.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(nimmFotoAuf, REQUEST_IMAGE_CAPTURE);
-            File photoFile = null;
+    private void captureImage() {
+        Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (captureImage.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(captureImage, REQUEST_IMAGE_CAPTURE);
+            File image = null;
             try {
-                photoFile = uniqueFotoNamen();
+                image = createUniqueImageName();
             } catch (IOException ex) {
                 // Error handling
-                System.out.print("Error: Keine Datei!");
+                System.out.print("Error: Kein Foto gefunden!");
             }
 
-            if (photoFile != null) {
-                Uri photoURI = FileProvider.getUriForFile(this,
+            if (image != null) {
+                Uri imageURI = FileProvider.getUriForFile(this,
                         "com.example.android.fileprovider",
-                        photoFile);
-                nimmFotoAuf.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                startActivityForResult(nimmFotoAuf, REQUEST_TAKE_PHOTO);
+                        image);
+                captureImage.putExtra(MediaStore.EXTRA_OUTPUT, imageURI);
+                startActivityForResult(captureImage, REQUEST_TAKE_PHOTO);
             }
         }
     }
 
     //  Foto mit unique Namen abspeichern
-    private File uniqueFotoNamen() throws IOException {
+    private File createUniqueImageName() throws IOException {
 //      Foto-Namen generieren (mit Timestamp)
-        String zeit = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
-        String fotoNamen = "Appquest_" + zeit + "_";
-        File speicherOrt = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(fotoNamen,".jpg", speicherOrt);
+        String time = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
+        String imageName = "Appquest_" + time + "_";
+        File directory = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(imageName,".jpg", directory);
 
 //      Abspeichern des Fotos
         mCurrentPhotoPath = image.getAbsolutePath();
@@ -115,31 +111,31 @@ public class MainActivity extends AppCompatActivity {
     //    Foto von Kamera zurückbekommen und anzeigen
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        meineFotoView = findViewById(R.id.meineFotoView);
-        gefiltertesFoto = findViewById(R.id.gefiltertesFotoView);
+        imageView = findViewById(R.id.meineFotoView);
+        imageFiltered = findViewById(R.id.gefiltertesFotoView);
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            File aufgenommenesFoto = fotoZuGallerieHinzufuegen();
-            meinFoto = fotoEinlesen(Uri.fromFile(aufgenommenesFoto));
-            meineFotoView.setImageBitmap(meinFoto);
+            File tempImage = addImageToGallery();
+            capturedImage = readSavedImage(Uri.fromFile(tempImage));
+            imageView.setImageBitmap(capturedImage);
 
             // Filter anwenden und Foto in ImageView unter Foto anzeigen
-            Bitmap meinGefiltertesFoto = bildBearbeiten(meinFoto);
-            gefiltertesFoto.setImageBitmap(meinGefiltertesFoto);
+            Bitmap bitmapFiltered = editBitmap(capturedImage);
+            imageFiltered.setImageBitmap(bitmapFiltered);
         }
     }
 
     // Foto in Gallerie speichern (Gallerie der App)
-    private File fotoZuGallerieHinzufuegen() {
-        Intent meinFoto = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-        File f = new File(mCurrentPhotoPath);
-        Uri contentUri = Uri.fromFile(f);
-        meinFoto.setData(contentUri);
-        this.sendBroadcast(meinFoto);
-        return f;
+    private File addImageToGallery() {
+        Intent scannedTempImage = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        File tempImageFromPath = new File(mCurrentPhotoPath);
+        Uri contentUri = Uri.fromFile(tempImageFromPath);
+        scannedTempImage.setData(contentUri);
+        this.sendBroadcast(scannedTempImage);
+        return tempImageFromPath;
     }
 
     // Hilfsfunktion zum Einlesen des Bildes: Merci an AppQuest!
-    private Bitmap fotoEinlesen(Uri imageUri) {
+    private Bitmap readSavedImage(Uri imageUri) {
         File file = new File(imageUri.getPath());
         InputStream is = null;
         try {
@@ -161,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 //    Foto zum Bearbeiten bereitstellen (damit Pixel bearbeitet weren können) Merci an AppQuest!
-    private Bitmap bildBearbeiten(Bitmap bitmap) {
+    private Bitmap editBitmap(Bitmap bitmap) {
         // Macht bitmap veränderbar; sonst Error bei SetPixels()
         bitmap = bitmap.copy( Bitmap.Config.ARGB_8888 , true);
 
@@ -175,11 +171,11 @@ public class MainActivity extends AppCompatActivity {
 
         for (int i = 0; i < data.length; i++){
             int alpha = (data[i]>>24) & 0x000000;
-            int rot = (data[i]>>16) & 0x00ffff;
-            int gruen = (data[i]>>8) & 0xff0000;
-            int blau = data[i] & 0xff0000;
+            int red = (data[i]>>16) & 0x00ffff;
+            int green = (data[i]>>8) & 0xff0000;
+            int blue = data[i] & 0xff0000;
 
-            data[i] = (alpha<<24) | (rot<<16) | (gruen<<8) | blau;
+            data[i] = (alpha<<24) | (red<<16) | (green<<8) | blue;
         }
         bitmap.setPixels(data, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
         Bitmap.createBitmap(data, width, height, Bitmap.Config.ARGB_8888);
@@ -187,22 +183,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
 //  Button um Lösung ins Logbuch eintragen
-    public void loesungEingeben() {
-        logButton = findViewById(R.id.logBuchEintrag);
-        logButton.setOnClickListener(new View.OnClickListener() {
+    public void addListenerOnLogResultsButton() {
+        logResultsButton = findViewById(R.id.logBuchEintrag);
+        logResultsButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View view) {
                 final AlertDialog.Builder inputAlert = new AlertDialog.Builder(context);
                 inputAlert.setTitle("Lösungswort eintragen");
                 inputAlert.setMessage("Bitte Lösung eintragen:");
-                final EditText benutzerEingabe = new EditText(context);
-                inputAlert.setView(benutzerEingabe);
+                final EditText userInput = new EditText(context);
+                inputAlert.setView(userInput);
                 inputAlert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        String loesungswort = benutzerEingabe.getText().toString();
-                        log(loesungswort);
+                        String solution = userInput.getText().toString();
+                        log(solution);
                     }
                 });
                 inputAlert.setNegativeButton("Abbrechen", new DialogInterface.OnClickListener() {
@@ -218,7 +214,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 //    Logbuch Eintrag erfassen:
-    private void log(String loesung) {
+    private void log(String solution) {
         Intent intent = new Intent("ch.appquest.intent.LOG");
 
         if (getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).isEmpty()) {
@@ -228,15 +224,15 @@ public class MainActivity extends AppCompatActivity {
 
         // ToDo: als Funktion abkapseln
         // Lösungsword eintragen
-        JSONObject loesungsJSON = new JSONObject();
+        JSONObject solutionJSON = new JSONObject();
         try {
-            loesungsJSON.put("task", "Dechiffrierer");
-            loesungsJSON.put("solution", loesung);
+            solutionJSON.put("task", "Dechiffrierer");
+            solutionJSON.put("solution", solution);
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        intent.putExtra("ch.appquest.logmessage", loesungsJSON.toString());
+        intent.putExtra("ch.appquest.logmessage", solutionJSON.toString());
 
         startActivity(intent);
     }
