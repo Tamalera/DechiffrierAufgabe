@@ -3,7 +3,6 @@ package com.example.taamefl2.appquestdechiffrieraufgabe;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.icu.text.SimpleDateFormat;
@@ -19,10 +18,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.Toast;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,8 +33,8 @@ public class MainActivity extends AppCompatActivity {
     static final int REQUEST_TAKE_PHOTO = 1;
     private Context context = this;
     String mCurrentPhotoPath;
-    ImageView imageFiltered;
     ImageView imageView;
+    ImageView imageFiltered;
     Bitmap capturedImage;
     Button captureImageButton;
     Button logResultsButton;
@@ -54,7 +49,6 @@ public class MainActivity extends AppCompatActivity {
         addListenerOnLogResultsButton();
     }
 
-    // Adds listener to the image button
     public void addListenerOnCaptureImageButton() {
         captureImageButton = findViewById(R.id.captureImageButton);
         captureImageButton.setOnClickListener(new View.OnClickListener() {
